@@ -27,7 +27,7 @@ public class MyUserDetailService implements UserDetailsService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User byUsername = userDao.findByUsername(username);
         Hibernate.initialize(byUsername.getRoles());
