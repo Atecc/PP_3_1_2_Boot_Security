@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Set;
 
 @Entity
-@Table(name = "USER")
+@Table(name = "user")
 public class User implements UserDetails {
 
     @Id
@@ -128,7 +128,13 @@ public class User implements UserDetails {
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }
-
+    public String getRolesToString() {
+        String res = "";
+        for (Role role : roles) {
+            res = res + role.toString().replace("ROLE", "") + " ";
+        }
+        return res;
+    }
     @Override
     public String toString() {
         return "User{" +
