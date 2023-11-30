@@ -1,124 +1,88 @@
 package ru.kata.spring.boot_security.demo.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "user")
 public class User implements UserDetails {
-
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @NotEmpty(message = "Укажите пароль")
-    @Column(name = "password")
+    private long id;
+    @NotEmpty
+    @Size(min = 2, max = 100, message = "Длина поля username должна быть от 2 до 100 символов")
+    @Column
+    private String username;
+    @Column
     private String password;
+    @Column
+    private int value;
+    @Column
+    private String name;
 
-    @Column(name = "first_name")
-    @NotEmpty(message = "укажите имя")
-    private String firstName;
-
-    @Column(name = "last_name")
-    @NotEmpty(message = "укажите фамилию")
-    private String lastName;
-
-    @Column(name = "email", unique = true)
-    @Email(message = "введенные данные не соответствуют email")
-    @NotEmpty(message = "укажите email")
-    private String email;
-
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    private Set<Role> roles;
-
-    public User() {
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn (name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    @Fetch(FetchMode.JOIN)
+    private Set<Role> roles = new HashSet<>();
+    public long getId() {
+        return id;
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return getRoles();
+    public void setId(long id) {
+        this.id = id;
     }
 
-    @Override
-    public String getPassword() {
-        return this.password;
-    }
-
-    @Override
     public String getUsername() {
-        return this.email;
+        return username;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Override
+    @JsonIgnore
     public boolean isEnabled() {
         return true;
     }
 
-    public User(String password, String firstName, String lastName, String email, Set<Role> roles) {
-        this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.roles = roles;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    @Override
+    @JsonIgnore
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return getRoles();
     }
 
     public Set<Role> getRoles() {
@@ -128,22 +92,64 @@ public class User implements UserDetails {
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }
-    public String getRolesToString() {
-        String res = "";
-        for (Role role : roles) {
-            res = res + role.toString().replace("ROLE", "") + " ";
-        }
-        return res;
+
+    public String getPassword() {
+        return password;
     }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void addRole(Role role) {
+        roles.add(role);
+    }
+    @JsonIgnore
+    public String getRolesToString() {
+        StringBuilder roleNames = new StringBuilder();
+        getRoles().forEach(x -> roleNames.append(x.getName().substring(5) + " "));
+
+        return roleNames.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User)) return false;
+        User user = (User) o;
+        return id == user.id && value == user.value && Objects.equals(username, user.username) && Objects.equals(password, user.password) && Objects.equals(name, user.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, username, password, value, name);
+    }
+
     @Override
     public String toString() {
         return "User{" +
-               "id=" + id +
-               ", password='" + password + '\'' +
-               ", firstName='" + firstName + '\'' +
-               ", lastName='" + lastName + '\'' +
-               ", email='" + email + '\'' +
-               ", roles=" + roles +
-               '}';
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", value=" + value +
+                ", name='" + name + '\'' +
+                '}';
     }
+
 }

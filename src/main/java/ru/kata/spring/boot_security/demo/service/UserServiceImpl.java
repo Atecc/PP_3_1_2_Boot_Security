@@ -1,14 +1,14 @@
 package ru.kata.spring.boot_security.demo.service;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.kata.spring.boot_security.demo.dao.UserDao;
 import ru.kata.spring.boot_security.demo.models.Role;
 import ru.kata.spring.boot_security.demo.models.User;
-
-import java.util.HashSet;
+import ru.kata.spring.boot_security.demo.dao.UserDAO;
 import java.util.List;
 import java.util.Set;
 
@@ -16,59 +16,63 @@ import java.util.Set;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final UserDao userDao;
-    private final RoleService roleService;
+    private final UserDAO userDAO;
+
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserDao userDao, PasswordEncoder passwordEncoder, RoleService roleService) {
-        this.userDao = userDao;
-        this.roleService = roleService;
+    public UserServiceImpl(UserDAO userDAO, PasswordEncoder passwordEncoder) {
+        this.userDAO = userDAO;
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public User loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userDAO.findByUsername(username);
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
+        return user;
+    }
+
+    @Transactional
+    @Override
+    public void updateUser(User user, long id, Set<Role> roles) {
+        user.setRoles(roles);
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encodedPassword);
+        userDAO.update(user);
+    }
 
     @Transactional(readOnly = true)
     @Override
-    public List<User> findAll() {
-        return userDao.findAll();
+    public User getUserById(Long id) {
+        return userDAO.getById(id);
+    }
+
+    @Transactional
+    @Override
+    public void addUser(User user, Set<Role> roles) {
+        if (user != null) {
+            user.setRoles(roles);
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            userDAO.save(user);
+        }
+    }
+
+    @Transactional
+    @Override
+    public void deleteUser(Long id) {
+        userDAO.deleteById(id);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public User findOne(long id) {
-        return userDao.findOne(id);
+    public List<User> getAllUsers() {
+        return userDAO.findAll();
     }
 
-    @Transactional
-    @Override
-    public void save(User user, List<String> roles) {
-        Set<Role> roleSet = new HashSet<>();
-        for (String role : roles) {
-            roleSet.add(roleService.findByName(role));
-        }
-        String encode = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encode);
-        user.setRoles(roleSet);
-        userDao.save(user);
-    }
 
-    @Transactional
-    @Override
-    public void update(long id, User updeteUser, List<String> roles) {
-        Set<Role> roleSet = new HashSet<>();
-        for (String role : roles) {
-            roleSet.add(roleService.findByName(role));
-        }
-        String encode = passwordEncoder.encode(updeteUser.getPassword());
-        updeteUser.setRoles(roleSet);
-        updeteUser.setPassword(encode);
-        userDao.update(id, updeteUser);
-    }
 
-    @Transactional
-    @Override
-    public void delete(long id) {
-        userDao.delete(id);
-    }
 }
