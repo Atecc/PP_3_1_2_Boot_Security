@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +26,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class RESTAdminController {
     private final UserService userService;
     private final RoleService roleService;
@@ -38,14 +40,6 @@ public class RESTAdminController {
     @GetMapping()
     public ResponseEntity<List<User>> getAllUsers() {
         return new ResponseEntity<>( userService.getAllUsers(), HttpStatus.OK);
-    }
-    @GetMapping("/user")
-    public ResponseEntity<User> getCurrent(Principal principal) {
-        return new ResponseEntity<>(userService.loadUserByUsername(principal.getName()), HttpStatus.OK);
-    }
-    @GetMapping("user/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
-        return new ResponseEntity<>(userService.getUserById(id), HttpStatus.OK);
     }
 
 
