@@ -14,7 +14,7 @@ import ru.kata.spring.boot_security.demo.service.UserService;
 import java.security.Principal;
 @RestController
 @RequestMapping("/api/user")
-@PreAuthorize("hasRole('ROLE_USER')")
+@PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
 public class RESTUserController {
     private final UserService userService;
 
