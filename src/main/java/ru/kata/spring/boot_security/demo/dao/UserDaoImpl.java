@@ -43,6 +43,7 @@ public class UserDaoImpl implements UserDao {
                     .getSingleResult();
             return user;
         } catch (NoResultException e) {
+            System.out.println("User not found!!");
             throw new UsernameNotFoundException("User not found!");
         }
     }
